@@ -32,9 +32,9 @@
 // The current issue is that it just times out, output is:
 //
 // INFO  Initializing SD Card
-// └─ stm32l4_sd_example::____embassy_main_task::{async_fn#0} @ src\main.rs:52
+// └─ stm32l4_sd_example::____embassy_main_task::{async_fn#0} @ src\main.rs:65
 // INFO  Timeout
-// └─ stm32l4_sd_example::____embassy_main_task::{async_fn#0} @ src\main.rs:57
+// └─ stm32l4_sd_example::____embassy_main_task::{async_fn#0} @ src\main.rs:70
 
 #![no_std]
 #![no_main]
@@ -45,6 +45,7 @@ use embassy_stm32::sdmmc::{self,Sdmmc};
 use embassy_stm32::time::Hertz;
 use embassy_stm32::{bind_interrupts, peripherals};
 use embassy_stm32::pac;
+use embassy_stm32::Config;
 use {defmt_rtt as _, panic_probe as _};
 bind_interrupts!(struct Irqs {
     SDMMC1 => sdmmc::InterruptHandler<peripherals::SDMMC1>;
@@ -52,15 +53,18 @@ bind_interrupts!(struct Irqs {
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
-    //pac::RCC.apb2enr().modify(|w| w.set_sdmmcen(true)); //this was suggested as a possible issue online with the L4 chip, it's the same with and without it.
+    pac::RCC.apb2enr().modify(|w| w.set_sdmmcen(true)); //this was suggested as a possible issue online with the L4 chip, it's the same with and without it.
+    let mut config = Config::default();
+    // config.rcc.hsi48 = Some(embassy_stm32::rcc::Hsi48Config::default());  // another attempted solution, based on https://github.com/embassy-rs/embassy/issues/3049
+    // config.rcc.sys = embassy_stm32::rcc::Sysclk::HSI;
+    // let p = embassy_stm32::init(config);
     let p = embassy_stm32::init(Default::default());
     let sd_config = embassy_stm32::sdmmc::Config::default();
     let mut sd_card = Sdmmc::new_1bit(p.SDMMC1, Irqs, p.DMA2_CH4, p.PC12, p.PD2, p.PC8, sd_config);
 
-    //Timer::after_millis(100).await; //probably unneccesary delay
     info!("Initializing SD Card");
 
-    if let Err(e) = sd_card.init_sd_card(Hertz(2_000_000)).await{
+    if let Err(e) = sd_card.init_sd_card(Hertz(12_500_000)).await{
         match e {
             sdmmc::Error::Timeout=>{
                 info!("Timeout");
