@@ -1,34 +1,35 @@
 // Minimal example for sd card on stm32 L433RC
 //
 // Circuit layout (with 47k pullup resistors shown)
-// ┌────────────────────┐           ┌───────────────┐
-// │      SD Card       │           │  STM32L433RC  │
-// │            CMD  ●──┼─────┬─────┼─► PD2         │
-// │                    │     │     │               │
-// │                    │    [47K]  │ STM32L433RC   │
-// │                    │     │     │               │
-// │                    │    3V3    │               │
-// │                    │           │               │
-// │             CK  ●──┼───────────┼──► PC12       │
-// │                    │           │               │
-// │             D0  ●──┼─────┬─────┼──► PC8        │
-// │                    │     │     │               │
-// │                    │    [47K]  │               │
-// │                    │     │     │               │
-// │                    │    3V3    │               │
-// │                    │           │               │
-// │            VDD  ●──┼───────────┼──► 3V3        │
-// │                    │           │               │
-// │            VCC  ●──┼───────────┼──► GND        │
-// │                    │           └───────────────┘  
-// │            D1   ●──┼─[47K]──► 3V3 
-// │                    │          
-// │            D2   ●──┼─[47K]──► 3V3 
-// │                    │ 
-// │            D3   ●──┼─[47K]──► 3V3 
-// │                    │ 
-// └────────────────────┘    
-//
+// ┌──────────────┐        ┌──────────────┐
+// │   SD Card    │        │  STM32L433RC │
+// │              │        │              │
+// │       CMD ●──┼───┬────┼─► PD2        │
+// │              │   │    │              │
+// │              │ [47K]  │ STM32L433RC  │
+// │              │   │    │              │
+// │              │  3V3   │              │
+// │              │        │              │
+// │        CK ●──┼────────┼──► PC12      │
+// │              │        │              │
+// │        D0 ●──┼───┬────┼──► PC8       │
+// │              │   │    │              │
+// │              │ [47K]  │              │
+// │              │   │    │              │
+// │              │  3V3   │              │
+// │              │        │              │
+// │       VDD ●──┼────────┼──► 3V3       │
+// │              │        │              │
+// │       VCC ●──┼────────┼──► GND       │
+// │              │        └──────────────┘  
+// │      D1   ●──┼─[47K]──► 3V3 
+// │              │          
+// │      D2   ●──┼─[47K]──► 3V3 
+// │              │ 
+// │      D3   ●──┼─[47K]──► 3V3 
+// │              │ 
+// └──────────────┘
+
 // The current issue is that it just times out, output is:
 //
 // INFO  Initializing SD Card
@@ -61,53 +62,55 @@ async fn main(spawner: Spawner) {
     let mut sd_card = Sdmmc::new_1bit(p.SDMMC1, Irqs, p.DMA2_CH4, p.PC12, p.PD2, p.PC8, sd_config);
 
     info!("Initializing SD Card");
+    loop{// added a loop to auto-retry the initialization.
+        if let Err(e) = sd_card.init_sd_card(embassy_stm32::time::mhz(24)).await{
+            match e {
+                sdmmc::Error::Timeout=>{
+                    info!("Timeout");
+                }
+                sdmmc::Error::SoftwareTimeout=>{
+                    info!("Software Timeout");
+                }
+                sdmmc::Error::UnsupportedCardVersion=>{
+                    info!("Unsupported Card Version");
+                }
+                sdmmc::Error::UnsupportedCardType=>{
+                    info!("Unsupported Card Type");
+                }
+                sdmmc::Error::UnsupportedVoltage=>{
+                    info!("Unsupported Voltage");
+                }
+                sdmmc::Error::Crc=>{
+                    info!("CRC Error");
+                }
+                sdmmc::Error::NoCard=>{
+                    info!("No Card Inserted");
+                }
+                sdmmc::Error::BusWidth=>{
+                    info!("8-lane buses are not supported for SD cards");
+                }
+                sdmmc::Error::BadClock=>{
+                    info!("Bad Clock Supplied to the SDMMC Peripheral");
+                }
+                sdmmc::Error::SignalingSwitchFailed=>{
+                    info!("Signaling Switch Failed");
+                }
+                sdmmc::Error::Underrun=>{
+                    info!("Underrun Error");
+                }
+                sdmmc::Error::StBitErr=>{
+                    info!("ST Bit Error");
+                }
+                _ => {
+                    info!("Unknown error");
+                }
 
-    if let Err(e) = sd_card.init_sd_card(Hertz(600_000)).await{
-        match e {
-            sdmmc::Error::Timeout=>{
-                info!("Timeout");
             }
-            sdmmc::Error::SoftwareTimeout=>{
-                info!("Software Timeout");
-            }
-            sdmmc::Error::UnsupportedCardVersion=>{
-                info!("Unsupported Card Version");
-            }
-            sdmmc::Error::UnsupportedCardType=>{
-                info!("Unsupported Card Type");
-            }
-            sdmmc::Error::UnsupportedVoltage=>{
-                info!("Unsupported Voltage");
-            }
-            sdmmc::Error::Crc=>{
-                info!("CRC Error");
-            }
-            sdmmc::Error::NoCard=>{
-                info!("No Card Inserted");
-            }
-            sdmmc::Error::BusWidth=>{
-                info!("8-lane buses are not supported for SD cards");
-            }
-            sdmmc::Error::BadClock=>{
-                info!("Bad Clock Supplied to the SDMMC Peripheral");
-            }
-            sdmmc::Error::SignalingSwitchFailed=>{
-                info!("Signaling Switch Failed");
-            }
-            sdmmc::Error::Underrun=>{
-                info!("Underrun Error");
-            }
-            sdmmc::Error::StBitErr=>{
-                info!("ST Bit Error");
-            }
-            _ => {
-                info!("Unknown error");
-            }
-
+        }else{
+            info!("initialized");
+            break;
         }
-    }else{
-        info!("initialized");
-    };
+    }
     loop {
         cortex_m::asm::nop();
     }
