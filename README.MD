@@ -4,8 +4,6 @@ The sd card does not initialize.  There was originally an issue with the clock s
 
 https://github.com/embassy-rs/stm32-data/pull/625
 
-This isn't in the main branch of embassy though, so to run this correctly, embassy needs to be cloned to the main directory
-
 to flash on the NUCLEO-L433RC-P, hook up as shown below and then `cargo run`
 
 ```
