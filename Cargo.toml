@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-embassy-executor = { git = "https://github.com/embassy-rs/embassy" , rev = "b5ab3276dce7322e33946e974770fa91b98124a4", features = ["arch-cortex-m", "executor-thread"] }
-embassy-stm32 = { git = "https://github.com/embassy-rs/embassy" , rev = "b5ab3276dce7322e33946e974770fa91b98124a4", features = ["stm32l433rc", "time-driver-any","memory-x", "exti", "unstable-pac", "defmt"]  }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy" , rev = "06b160ac83b70b292ea92446a1eb69096b1c86ea", features = ["arch-cortex-m", "executor-thread"] }
+embassy-stm32 = { git = "https://github.com/embassy-rs/embassy" , rev = "06b160ac83b70b292ea92446a1eb69096b1c86ea", features = ["stm32l433rc", "time-driver-any","memory-x", "exti", "unstable-pac", "defmt"]  }
 # embassy-stm32 = { version = "0.2.0", path = "./embassy/embassy-stm32", features = ["stm32l433rc", "time-driver-any","memory-x", "exti", "unstable-pac", "defmt"]  }
 
 defmt = "1.0.1"

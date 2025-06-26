@@ -108,7 +108,7 @@ async fn main(spawner: Spawner) {
             }
         }else{
             info!("initialized");
-            break;
+            // break;
         }
     }
     loop {
